@@ -1,0 +1,66 @@
+{
+  "id": "shayari_001",
+  "category": "shayari",
+  "subcategory": "romantic",
+  "language": "hi",
+  "tags": ["shayari", "love", "romantic", "pyaar", "dil"],
+  "premium": false,
+  "canvas": {
+    "width": 1080,
+    "height": 1080
+  },
+  "layers": [
+    {
+      "type": "image",
+      "src": "backgrounds/shayari_roses.webp",
+      "x": 0,
+      "y": 0,
+      "width": 1080,
+      "height": 1080,
+      "z": 0,
+      "locked": true
+    },
+    {
+      "type": "text",
+      "content": "तेरी याद में हम\nखो जाते हैं",
+      "font": "NotoSansDevanagari-Bold",
+      "size": 52,
+      "color": "#FFFFFF",
+      "x": 540,
+      "y": 300,
+      "z": 1,
+      "editable": true
+    },
+    {
+      "type": "text",
+      "content": "तेरे बिना जीना\nमुश्किल हो जाता है",
+      "font": "NotoSansDevanagari-Regular",
+      "size": 36,
+      "color": "#FFB6C1",
+      "x": 540,
+      "y": 480,
+      "z": 2,
+      "editable": true
+    },
+    {
+      "type": "placeholder",
+      "key": "user_name",
+      "font": "Poppins-SemiBold",
+      "size": 28,
+      "color": "#FFFFFF",
+      "x": 540,
+      "y": 900,
+      "z": 3
+    },
+    {
+      "type": "placeholder",
+      "key": "phone",
+      "font": "Poppins-Regular",
+      "size": 20,
+      "color": "#DDDDDD",
+      "x": 540,
+      "y": 950,
+      "z": 4
+    }
+  ]
+}

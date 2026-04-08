@@ -1,0 +1,87 @@
+{
+  "id": "business_sale_001",
+  "category": "business",
+  "subcategory": "sale",
+  "language": "en",
+  "tags": ["sale", "offer", "discount", "business", "promotion"],
+  "premium": true,
+  "canvas": {
+    "width": 1080,
+    "height": 1080
+  },
+  "layers": [
+    {
+      "type": "image",
+      "src": "backgrounds/red_sale_bg.webp",
+      "x": 0,
+      "y": 0,
+      "width": 1080,
+      "height": 1080,
+      "z": 0,
+      "locked": true
+    },
+    {
+      "type": "text",
+      "content": "MEGA SALE",
+      "font": "Poppins-Black",
+      "size": 96,
+      "color": "#FFFFFF",
+      "x": 540,
+      "y": 200,
+      "z": 1,
+      "editable": true
+    },
+    {
+      "type": "text",
+      "content": "UP TO 50% OFF",
+      "font": "Poppins-Bold",
+      "size": 48,
+      "color": "#FFD700",
+      "x": 540,
+      "y": 320,
+      "z": 2,
+      "editable": true
+    },
+    {
+      "type": "text",
+      "content": "Limited Time Offer",
+      "font": "Poppins-Regular",
+      "size": 28,
+      "color": "#FFFFFF",
+      "x": 540,
+      "y": 420,
+      "z": 3,
+      "editable": true
+    },
+    {
+      "type": "placeholder",
+      "key": "logo",
+      "shape": "rectangle",
+      "x": 540,
+      "y": 600,
+      "width": 160,
+      "height": 160,
+      "z": 4
+    },
+    {
+      "type": "placeholder",
+      "key": "user_name",
+      "font": "Poppins-SemiBold",
+      "size": 36,
+      "color": "#FFFFFF",
+      "x": 540,
+      "y": 780,
+      "z": 5
+    },
+    {
+      "type": "placeholder",
+      "key": "phone",
+      "font": "Poppins-Regular",
+      "size": 28,
+      "color": "#FFD700",
+      "x": 540,
+      "y": 840,
+      "z": 6
+    }
+  ]
+}

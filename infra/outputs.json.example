@@ -1,0 +1,10 @@
+{
+  "region": "ap-south-1",
+  "cognito_user_pool_id": "ap-south-1_AbCdEfGhI",
+  "cognito_client_id": "1a2b3c4d5e6f7g8h9i0j",
+  "dynamodb_table": "poster-app",
+  "s3_bucket": "poster-app-assets-techveda",
+  "cloudfront_distribution_id": "E1A2B3C4D5E6F7",
+  "cloudfront_domain": "d1234567abcdef.cloudfront.net",
+  "cloudfront_oac_id": "E1X2Y3Z4ABCDEF"
+}

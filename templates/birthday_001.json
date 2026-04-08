@@ -1,0 +1,83 @@
+{
+  "id": "birthday_001",
+  "category": "birthday",
+  "subcategory": "birthday",
+  "language": "en",
+  "tags": ["birthday", "happy birthday", "celebration", "party"],
+  "premium": false,
+  "canvas": {
+    "width": 1080,
+    "height": 1080
+  },
+  "layers": [
+    {
+      "type": "image",
+      "src": "backgrounds/birthday_confetti.webp",
+      "x": 0,
+      "y": 0,
+      "width": 1080,
+      "height": 1080,
+      "z": 0,
+      "locked": true
+    },
+    {
+      "type": "text",
+      "content": "Happy Birthday!",
+      "font": "Poppins-Bold",
+      "size": 72,
+      "color": "#FF1493",
+      "x": 540,
+      "y": 150,
+      "z": 1,
+      "editable": true
+    },
+    {
+      "type": "text",
+      "content": "Wishing you a wonderful day\nfilled with joy and happiness!",
+      "font": "Poppins-Regular",
+      "size": 28,
+      "color": "#333333",
+      "x": 540,
+      "y": 280,
+      "z": 2,
+      "editable": true
+    },
+    {
+      "type": "placeholder",
+      "key": "user_photo",
+      "shape": "circle",
+      "x": 540,
+      "y": 520,
+      "radius": 130,
+      "z": 3
+    },
+    {
+      "type": "placeholder",
+      "key": "user_name",
+      "font": "Poppins-SemiBold",
+      "size": 40,
+      "color": "#333333",
+      "x": 540,
+      "y": 700,
+      "z": 4
+    },
+    {
+      "type": "sticker",
+      "src": "stickers/cake.webp",
+      "x": 200,
+      "y": 850,
+      "width": 120,
+      "height": 120,
+      "z": 5
+    },
+    {
+      "type": "sticker",
+      "src": "stickers/balloons.webp",
+      "x": 880,
+      "y": 850,
+      "width": 120,
+      "height": 120,
+      "z": 6
+    }
+  ]
+}

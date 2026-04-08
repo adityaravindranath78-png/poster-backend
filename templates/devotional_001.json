@@ -1,0 +1,75 @@
+{
+  "id": "devotional_001",
+  "category": "devotional",
+  "subcategory": "ganesh",
+  "language": "hi",
+  "tags": ["ganesh", "ganpati", "devotional", "bhakti", "lord ganesha"],
+  "premium": false,
+  "canvas": {
+    "width": 1080,
+    "height": 1080
+  },
+  "layers": [
+    {
+      "type": "image",
+      "src": "backgrounds/ganesh_orange.webp",
+      "x": 0,
+      "y": 0,
+      "width": 1080,
+      "height": 1080,
+      "z": 0,
+      "locked": true
+    },
+    {
+      "type": "text",
+      "content": "॥ गणपति बप्पा मोरया ॥",
+      "font": "NotoSansDevanagari-Bold",
+      "size": 56,
+      "color": "#FF4500",
+      "x": 540,
+      "y": 140,
+      "z": 1,
+      "editable": true
+    },
+    {
+      "type": "text",
+      "content": "सर्व मंगल मांगल्ये\nशिवे सर्वार्थ साधिके",
+      "font": "NotoSansDevanagari-Regular",
+      "size": 32,
+      "color": "#8B4513",
+      "x": 540,
+      "y": 260,
+      "z": 2,
+      "editable": true
+    },
+    {
+      "type": "placeholder",
+      "key": "user_photo",
+      "shape": "circle",
+      "x": 540,
+      "y": 600,
+      "radius": 100,
+      "z": 3
+    },
+    {
+      "type": "placeholder",
+      "key": "user_name",
+      "font": "Poppins-SemiBold",
+      "size": 32,
+      "color": "#8B4513",
+      "x": 540,
+      "y": 750,
+      "z": 4
+    },
+    {
+      "type": "placeholder",
+      "key": "phone",
+      "font": "Poppins-Regular",
+      "size": 22,
+      "color": "#A0522D",
+      "x": 540,
+      "y": 800,
+      "z": 5
+    }
+  ]
+}

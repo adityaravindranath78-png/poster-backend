@@ -1,0 +1,66 @@
+{
+  "id": "motivational_001",
+  "category": "motivational",
+  "subcategory": "success",
+  "language": "en",
+  "tags": ["motivation", "success", "hustle", "inspiring"],
+  "premium": false,
+  "canvas": {
+    "width": 1080,
+    "height": 1080
+  },
+  "layers": [
+    {
+      "type": "image",
+      "src": "backgrounds/dark_gradient.webp",
+      "x": 0,
+      "y": 0,
+      "width": 1080,
+      "height": 1080,
+      "z": 0,
+      "locked": true
+    },
+    {
+      "type": "text",
+      "content": "Success is not final,\nfailure is not fatal.",
+      "font": "Poppins-Bold",
+      "size": 56,
+      "color": "#FFFFFF",
+      "x": 540,
+      "y": 350,
+      "z": 1,
+      "editable": true
+    },
+    {
+      "type": "text",
+      "content": "It is the courage to continue\nthat counts.",
+      "font": "Poppins-Regular",
+      "size": 32,
+      "color": "#AAAAAA",
+      "x": 540,
+      "y": 520,
+      "z": 2,
+      "editable": true
+    },
+    {
+      "type": "placeholder",
+      "key": "user_name",
+      "font": "Poppins-SemiBold",
+      "size": 28,
+      "color": "#FF6B35",
+      "x": 540,
+      "y": 900,
+      "z": 3
+    },
+    {
+      "type": "placeholder",
+      "key": "logo",
+      "shape": "rectangle",
+      "x": 540,
+      "y": 980,
+      "width": 80,
+      "height": 80,
+      "z": 4
+    }
+  ]
+}

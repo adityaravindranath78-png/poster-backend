@@ -1,0 +1,93 @@
+{
+  "id": "diwali_001",
+  "category": "festival",
+  "subcategory": "diwali",
+  "language": "hi",
+  "tags": ["diwali", "deepavali", "festival", "lights", "deepawali"],
+  "premium": false,
+  "canvas": {
+    "width": 1080,
+    "height": 1080
+  },
+  "layers": [
+    {
+      "type": "image",
+      "src": "backgrounds/diwali_lights.webp",
+      "x": 0,
+      "y": 0,
+      "width": 1080,
+      "height": 1080,
+      "z": 0,
+      "locked": true
+    },
+    {
+      "type": "text",
+      "content": "शुभ दीपावली",
+      "font": "NotoSansDevanagari-Bold",
+      "size": 72,
+      "color": "#FFD700",
+      "x": 540,
+      "y": 160,
+      "z": 1,
+      "editable": true
+    },
+    {
+      "type": "text",
+      "content": "दीपों का त्योहार मुबारक हो",
+      "font": "NotoSansDevanagari-Regular",
+      "size": 30,
+      "color": "#FFF8DC",
+      "x": 540,
+      "y": 260,
+      "z": 2,
+      "editable": true
+    },
+    {
+      "type": "sticker",
+      "src": "stickers/diya_sparkle.webp",
+      "x": 150,
+      "y": 850,
+      "width": 140,
+      "height": 140,
+      "z": 3
+    },
+    {
+      "type": "sticker",
+      "src": "stickers/diya_sparkle.webp",
+      "x": 930,
+      "y": 850,
+      "width": 140,
+      "height": 140,
+      "z": 4
+    },
+    {
+      "type": "placeholder",
+      "key": "user_photo",
+      "shape": "circle",
+      "x": 540,
+      "y": 500,
+      "radius": 120,
+      "z": 5
+    },
+    {
+      "type": "placeholder",
+      "key": "user_name",
+      "font": "Poppins-SemiBold",
+      "size": 36,
+      "color": "#FFFFFF",
+      "x": 540,
+      "y": 660,
+      "z": 6
+    },
+    {
+      "type": "placeholder",
+      "key": "phone",
+      "font": "Poppins-Regular",
+      "size": 24,
+      "color": "#CCCCCC",
+      "x": 540,
+      "y": 710,
+      "z": 7
+    }
+  ]
+}

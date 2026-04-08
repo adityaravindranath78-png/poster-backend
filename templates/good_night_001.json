@@ -1,0 +1,75 @@
+{
+  "id": "good_night_001",
+  "category": "good_night",
+  "subcategory": "good_night",
+  "language": "hi",
+  "tags": ["good night", "shubh ratri", "night", "sweet dreams"],
+  "premium": false,
+  "canvas": {
+    "width": 1080,
+    "height": 1080
+  },
+  "layers": [
+    {
+      "type": "image",
+      "src": "backgrounds/night_stars.webp",
+      "x": 0,
+      "y": 0,
+      "width": 1080,
+      "height": 1080,
+      "z": 0,
+      "locked": true
+    },
+    {
+      "type": "text",
+      "content": "शुभ रात्रि",
+      "font": "NotoSansDevanagari-Bold",
+      "size": 80,
+      "color": "#E6E6FA",
+      "x": 540,
+      "y": 200,
+      "z": 1,
+      "editable": true
+    },
+    {
+      "type": "text",
+      "content": "सपनों की दुनिया में\nखो जाइए",
+      "font": "NotoSansDevanagari-Regular",
+      "size": 34,
+      "color": "#B0C4DE",
+      "x": 540,
+      "y": 320,
+      "z": 2,
+      "editable": true
+    },
+    {
+      "type": "sticker",
+      "src": "stickers/moon.webp",
+      "x": 540,
+      "y": 550,
+      "width": 200,
+      "height": 200,
+      "z": 3
+    },
+    {
+      "type": "placeholder",
+      "key": "user_name",
+      "font": "Poppins-SemiBold",
+      "size": 32,
+      "color": "#E6E6FA",
+      "x": 540,
+      "y": 820,
+      "z": 4
+    },
+    {
+      "type": "placeholder",
+      "key": "phone",
+      "font": "Poppins-Regular",
+      "size": 22,
+      "color": "#9999CC",
+      "x": 540,
+      "y": 870,
+      "z": 5
+    }
+  ]
+}
