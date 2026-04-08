@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "1023925943500",
+    "project_id": "poster-6e6e4",
+    "storage_bucket": "poster-6e6e4.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1023925943500:android:64215dd4dfb6a29d661669",
+        "android_client_info": {
+          "package_name": "com.techveda.poster"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1023925943500-fkf57nv99ieq8qpkdp21mf09al3kkc92.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.techveda.poster",
+            "certificate_hash": "041d698006511d716f2990fac8562d318f143a1a"
+          }
+        },
+        {
+          "client_id": "1023925943500-2h3mfnk3ds4jg22vforn5tvjjlbe5c9c.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCsjExf0rfHGG_dBVgQC2bC7GCAPUlrWa4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1023925943500-2h3mfnk3ds4jg22vforn5tvjjlbe5c9c.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "1023925943500-bifvtrm9ouq9b0j67tijvih4d05oba8k.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.techveda.poster"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

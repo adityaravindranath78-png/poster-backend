@@ -1,0 +1,14 @@
+node_modules/
+.env
+.env.local
+.DS_Store
+ios/Pods/
+ios/build/
+android/.gradle/
+android/app/build/
+android/build/
+*.apk
+*.ipa
+*.jks
+.expo/
+__generated__/
