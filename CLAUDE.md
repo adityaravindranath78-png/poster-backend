@@ -8,12 +8,12 @@ A hybrid of Crafto (120M+ downloads, auto-personalize status maker) and Poster M
 ## Tech Stack
 - **App:** React Native (TypeScript) + Zustand + React Navigation
 - **Canvas:** fabric.js in WebView (MVP), react-native-skia migration later
-- **Auth:** AWS Cognito (phone OTP + Google)
+- **Auth:** Firebase (Phone OTP + Google sign-in)
 - **API:** Node.js/Express on EC2
 - **DB:** DynamoDB
 - **Storage:** S3 + CloudFront
 - **Image/Video Processing:** Lambda + Sharp + FFmpeg
-- **Payments:** Razorpay + Google Play Billing
+- **Payments:** Razorpay + Google Play Billing (day 2)
 - **Push:** FCM via SNS
 - **Admin:** Next.js web app
 
@@ -22,16 +22,49 @@ Templates are JSON schemas with layered structure (not flat images). Each templa
 
 See `PROJECT_BRIEF.md` for full template JSON schema, DynamoDB schema, architecture diagrams, feature breakdown, timeline, and pricing.
 
-## Project Structure
+## Repos & Local Structure
 ```
-poster-app/
-  PROJECT_BRIEF.md        # Full project brief, research, architecture
-  CLAUDE.md               # This file (living doc — updated as we build)
-  app/                    # React Native app (RN 0.84.1, TypeScript)
-  backend/                # Express API (TypeScript)
-  admin/                  # Next.js admin panel
-  infra/                  # AWS setup/teardown/seed scripts
-  templates/              # 8 seed template JSONs
+GitHub: adityaravindranath78-png/poster-frontend   (private)
+GitHub: adityaravindranath78-png/poster-backend     (private)
+Collaborator: Vinay-Gurjar (admin on both)
+
+Local:
+  /Users/adityar/projects/freelancing/poster-frontend/   # React Native app
+  /Users/adityar/projects/freelancing/poster-backend/     # Express API + admin + infra + templates
+```
+
+### poster-frontend (React Native app)
+```
+App.tsx                   # Entry — Firebase auth listener, navigation
+src/
+  navigation/             # RootNavigator (auth gate + tabs), types
+  screens/
+    auth/                 # LoginScreen, OtpVerifyScreen
+    home/                 # HomeScreen, CategoryScreen, TemplatePreviewScreen
+    editor/               # EditorScreen (fabric.js WebView)
+    profile/              # ProfileScreen, SubscriptionScreen
+    settings/             # SettingsScreen
+  components/             # TemplateCard, WatermarkOverlay, PaywallModal, ErrorState, LoadingState, ProfileForm
+  store/                  # Zustand: auth, user, template, editor, subscription
+  services/               # api (Axios+JWT), auth, templates, user, subscription, storage
+  utils/                  # constants, helpers, templateEngine (auto-fill)
+  types/                  # template, user, api
+android/                  # Native Android (google-services.json included)
+ios/                      # Native iOS (GoogleService-Info.plist included)
+```
+
+### poster-backend (Express + Admin + Infra)
+```
+src/
+  config/                 # env (zod), dynamodb, s3, firebase admin
+  middleware/              # auth (Firebase JWT), errorHandler, rateLimiter
+  routes/                 # user, templates, upload, subscription
+  services/               # userService, templateService, s3Service
+  types/                  # shared types
+  utils/                  # response helpers
+admin/                    # Next.js admin panel (template upload + management)
+infra/                    # setup.sh, teardown.sh, seed-templates.sh
+templates/                # 8 seed template JSONs
 ```
 
 ## Current Status
@@ -54,12 +87,12 @@ poster-app/
 - [x] Google Services Gradle plugin configured
 - [x] Android debug build successful — app runs on physical device
 - [x] Metro bundler connects and loads JS bundle
+- [x] Repos split: poster-frontend + poster-backend (GitHub, private)
+- [x] Vinay-Gurjar added as admin collaborator on both repos
 
-### In Progress
-- [ ] Test auth flow end-to-end
-
-### Not Started
-- [ ] Run AWS infra setup
+### Next Up
+- [ ] Test auth flow end-to-end (Login screen → OTP → Profile setup)
+- [ ] Run AWS infra setup (DynamoDB, S3, CloudFront)
 - [ ] Connect app to backend
 - [ ] Template browsing + Quick Mode rendering
 - [ ] Download + share functionality
@@ -80,7 +113,7 @@ poster-app/
 ## Conventions
 - TypeScript strict mode everywhere
 - Zustand for state (no Redux, no Context for global state)
-- Axios with Cognito JWT interceptor
+- Axios with Firebase JWT interceptor
 - Feature folders: `src/screens/`, `src/components/`, `src/store/`, `src/services/`, `src/utils/`
 - DynamoDB single-table design
 - All assets via CloudFront (never S3 direct)
