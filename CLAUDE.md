@@ -106,8 +106,16 @@ templates/                # 8 seed template JSONs
 - [x] CategoryScreen rebuilt — staggered skeleton grid, FadeIn per card, pull-to-refresh, infinite scroll
 - [x] TemplatePreviewScreen rebuilt — dark immersive backdrop, hero image spring scale, floating action bar, haptics
 
+- [x] EditorScreen rebuilt — floating toolbar in dark card, icon+label tools, grouped with dividers, haptic feedback
+- [x] ProfileScreen rebuilt — animated avatar bounce, initial letter placeholder, Input components, success haptic
+- [x] SubscriptionScreen rebuilt — plan cards with haptic scale, "BEST VALUE" gradient badge, glow shadow, staggered entrance
+- [x] SettingsScreen rebuilt — language chips with glow, icon rows with arrows, section cards, danger sign-out
+- [x] ALL SCREENS REBUILT WITH DESIGN SYSTEM
+
 ### Next Up
-- [ ] Rebuild remaining screens (Editor, Profile, Subscription, Settings) with design system
+- [ ] Build and test on device — verify all screens render correctly
+- [ ] Test auth flow end-to-end (Login → OTP → Profile setup)
+- [ ] Run AWS infra setup (DynamoDB, S3, CloudFront)
 - [ ] Run AWS infra setup (DynamoDB, S3, CloudFront)
 - [ ] Connect app to backend
 - [ ] Template browsing + Quick Mode rendering
