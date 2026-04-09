@@ -100,8 +100,11 @@ templates/                # 8 seed template JSONs
 - [x] Animated splash screen (pulsing brand icon)
 - [x] GestureHandlerRootView + reanimated babel plugin
 
+- [x] HomeScreen rebuilt — greeting header with parallax, category pill carousel, daily specials carousel, trending grid with skeletons
+- [x] TemplateCard rebuilt — haptic press, skeleton shimmer, fade-in on load, premium badge
+
 ### Next Up
-- [ ] Rebuild HomeScreen with design system (category carousel, skeleton grid)
+- [ ] Rebuild CategoryScreen + TemplatePreviewScreen with design system
 - [ ] Run AWS infra setup (DynamoDB, S3, CloudFront)
 - [ ] Connect app to backend
 - [ ] Template browsing + Quick Mode rendering
