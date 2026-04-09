@@ -44,7 +44,8 @@ src/
     editor/               # EditorScreen (fabric.js WebView)
     profile/              # ProfileScreen, SubscriptionScreen
     settings/             # SettingsScreen
-  components/             # TemplateCard, WatermarkOverlay, PaywallModal, ErrorState, LoadingState, ProfileForm
+  theme/                  # Design system: colors, typography, spacing, animations
+  components/             # Base: Button, Input, HapticPressable, SkeletonLoader, FadeIn, BottomSheet + app components
   store/                  # Zustand: auth, user, template, editor, subscription
   services/               # api (Axios+JWT), auth, templates, user, subscription, storage
   utils/                  # constants, helpers, templateEngine (auto-fill)
@@ -89,9 +90,13 @@ templates/                # 8 seed template JSONs
 - [x] Metro bundler connects and loads JS bundle
 - [x] Repos split: poster-frontend + poster-backend (GitHub, private)
 - [x] Vinay-Gurjar added as admin collaborator on both repos
+- [x] Design system foundation (color tokens, typography, spacing, radii, shadows)
+- [x] Animation primitives (5 spring configs, timing presets, press scales)
+- [x] Base components: HapticPressable, Button (gradient), Input (animated border), SkeletonLoader, FadeIn, BottomSheet
+- [x] Deps: react-native-reanimated, gesture-handler, haptic-feedback, linear-gradient, blur
 
 ### Next Up
-- [ ] Test auth flow end-to-end (Login screen → OTP → Profile setup)
+- [ ] Rebuild LoginScreen + OtpVerifyScreen with design system (god-tier polish)
 - [ ] Run AWS infra setup (DynamoDB, S3, CloudFront)
 - [ ] Connect app to backend
 - [ ] Template browsing + Quick Mode rendering
