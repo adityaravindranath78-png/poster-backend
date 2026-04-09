@@ -103,8 +103,11 @@ templates/                # 8 seed template JSONs
 - [x] HomeScreen rebuilt — greeting header with parallax, category pill carousel, daily specials carousel, trending grid with skeletons
 - [x] TemplateCard rebuilt — haptic press, skeleton shimmer, fade-in on load, premium badge
 
+- [x] CategoryScreen rebuilt — staggered skeleton grid, FadeIn per card, pull-to-refresh, infinite scroll
+- [x] TemplatePreviewScreen rebuilt — dark immersive backdrop, hero image spring scale, floating action bar, haptics
+
 ### Next Up
-- [ ] Rebuild CategoryScreen + TemplatePreviewScreen with design system
+- [ ] Rebuild remaining screens (Editor, Profile, Subscription, Settings) with design system
 - [ ] Run AWS infra setup (DynamoDB, S3, CloudFront)
 - [ ] Connect app to backend
 - [ ] Template browsing + Quick Mode rendering
