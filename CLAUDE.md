@@ -95,8 +95,13 @@ templates/                # 8 seed template JSONs
 - [x] Base components: HapticPressable, Button (gradient), Input (animated border), SkeletonLoader, FadeIn, BottomSheet
 - [x] Deps: react-native-reanimated, gesture-handler, haptic-feedback, linear-gradient, blur
 
+- [x] LoginScreen rebuilt — gradient orb, animated brand, staggered FadeIn, animated Input, haptic Button
+- [x] OtpVerifyScreen rebuilt — spring-scale cells, shake on error, haptic per keystroke, countdown timer, paste support
+- [x] Animated splash screen (pulsing brand icon)
+- [x] GestureHandlerRootView + reanimated babel plugin
+
 ### Next Up
-- [ ] Rebuild LoginScreen + OtpVerifyScreen with design system (god-tier polish)
+- [ ] Rebuild HomeScreen with design system (category carousel, skeleton grid)
 - [ ] Run AWS infra setup (DynamoDB, S3, CloudFront)
 - [ ] Connect app to backend
 - [ ] Template browsing + Quick Mode rendering
