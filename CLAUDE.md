@@ -112,10 +112,16 @@ templates/                # 8 seed template JSONs
 - [x] SettingsScreen rebuilt — language chips with glow, icon rows with arrows, section cards, danger sign-out
 - [x] ALL SCREENS REBUILT WITH DESIGN SYSTEM
 
+- [x] Android build successful, app running on physical device
+- [x] All design system screens verified rendering on device
+- [x] Auth flow working — Firebase session persisted, navigation gate correct (auth → profile setup)
+- [x] Profile screen verified — avatar initial, image picker, input fields, gradient button all working
+- [x] Worklet error fixed (switched HapticPressable from GestureDetector to Pressable)
+
 ### Next Up
-- [ ] Build and test on device — verify all screens render correctly
-- [ ] Test auth flow end-to-end (Login → OTP → Profile setup)
+- [ ] Run backend (Express API) so profile save works
 - [ ] Run AWS infra setup (DynamoDB, S3, CloudFront)
+- [ ] Complete auth flow test (Login → OTP → Profile → Home)
 - [ ] Run AWS infra setup (DynamoDB, S3, CloudFront)
 - [ ] Connect app to backend
 - [ ] Template browsing + Quick Mode rendering
