@@ -9,13 +9,13 @@ A hybrid of Crafto (120M+ downloads, auto-personalize status maker) and Poster M
 - **App:** React Native (TypeScript) + Zustand + React Navigation
 - **Canvas:** fabric.js in WebView (MVP), react-native-skia migration later
 - **Auth:** Firebase (Phone OTP + Google sign-in)
-- **API:** Node.js/Express on EC2
-- **DB:** DynamoDB
-- **Storage:** S3 + CloudFront
-- **Image/Video Processing:** Lambda + Sharp + FFmpeg
-- **Payments:** Razorpay + Google Play Billing (day 2)
-- **Push:** FCM via SNS
-- **Admin:** Next.js web app
+- **API:** Node.js/Express (TypeScript) — `src/`
+- **DB:** DynamoDB (single-table design)
+- **Storage:** S3 + CloudFront CDN
+- **Image/Video Processing:** Lambda + Sharp + FFmpeg (planned)
+- **Payments:** Razorpay + Google Play Billing (planned)
+- **Push:** FCM via SNS (planned)
+- **Admin:** Next.js web app — `admin/`
 
 ## Key Architecture
 Templates are JSON schemas with layered structure (not flat images). Each template defines background, text layers, placeholder tokens (user_photo, user_name, phone, logo), and stickers. Quick Mode fills placeholders automatically. Edit Mode loads same JSON into fabric.js as editable layers.
@@ -41,9 +41,10 @@ src/
   screens/
     auth/                 # LoginScreen, OtpVerifyScreen
     home/                 # HomeScreen, CategoryScreen, TemplatePreviewScreen
-    editor/               # EditorScreen (fabric.js WebView)
+    editor/               # EditorScreen (fabric.js WebView — WORKING)
     profile/              # ProfileScreen, SubscriptionScreen
     settings/             # SettingsScreen
+  canvas/                 # editorHtml.ts — fabric.js HTML engine
   theme/                  # Design system: colors, typography, spacing, animations
   components/             # Base: Button, Input, HapticPressable, SkeletonLoader, FadeIn, BottomSheet + app components
   store/                  # Zustand: auth, user, template, editor, subscription
@@ -57,8 +58,9 @@ ios/                      # Native iOS (GoogleService-Info.plist included)
 ### poster-backend (Express + Admin + Infra)
 ```
 src/
+  index.ts                # Express entry point (port 3000)
   config/                 # env (zod), dynamodb, s3, firebase admin
-  middleware/              # auth (Firebase JWT), errorHandler, rateLimiter
+  middleware/              # auth (Firebase JWT + dev bypass), errorHandler, rateLimiter
   routes/                 # user, templates, upload, subscription
   services/               # userService, templateService, s3Service
   types/                  # shared types
@@ -68,77 +70,64 @@ infra/                    # setup.sh, teardown.sh, seed-templates.sh
 templates/                # 8 seed template JSONs
 ```
 
+## AWS Infrastructure (PROVISIONED)
+- **DynamoDB:** `poster-app` table (PK/SK) with GSIs: `category-language-index`, `scheduled-date-index`. PITR enabled.
+- **S3:** `poster-app-assets-techveda` (versioning, public access blocked, CORS for GET+PUT)
+- **CloudFront:** `dklcr2on9ks6p.cloudfront.net` with OAC (no public S3 URLs)
+- **Region:** ap-south-1
+
+## API Endpoints
+```
+GET    /health                          # Health check
+GET    /api/v1/templates                # List templates (query: category, language, limit, nextKey)
+GET    /api/v1/templates/daily          # Daily scheduled templates (query: language)
+GET    /api/v1/templates/search         # Search templates (query: q, limit)
+GET    /api/v1/templates/:id            # Get single template
+GET    /api/v1/user/profile             # Get user profile [auth]
+PUT    /api/v1/user/profile             # Update user profile [auth]
+POST   /api/v1/upload/presigned-url     # Get S3 presigned upload URL [auth]
+GET    /api/v1/subscription/status      # Get subscription status [auth]
+```
+
 ## Current Status
 
 ### Done
 - [x] RN scaffold + navigation (auth stack, main tabs, home stack, profile stack)
-- [x] Firebase Auth setup (Phone OTP + Google sign-in) — both providers enabled
-- [x] Firebase config files placed (`google-services.json`, `GoogleService-Info.plist`)
-- [x] Web client ID wired into `App.tsx`
+- [x] Firebase Auth setup (Phone OTP + Google sign-in)
+- [x] All screens rebuilt with premium design system (animations, haptics, skeletons)
 - [x] Zustand stores (auth, user, template, editor, subscription)
 - [x] Services layer (api with JWT interceptor, auth, templates, user, storage, subscription)
-- [x] All screens (Login, OTP, Home, Category, TemplatePreview, Editor, Profile, Subscription, Settings)
-- [x] Components (TemplateCard, WatermarkOverlay, LoadingState, ErrorState, PaywallModal, ProfileForm)
 - [x] Template engine (auto-fill placeholders with user profile)
-- [x] Express backend (routes, middleware, DynamoDB/S3 services, Firebase Admin auth)
+- [x] **Express backend API — FULLY BUILT AND TESTED**
+- [x] **AWS infrastructure provisioned (DynamoDB, S3, CloudFront)**
+- [x] **8 templates seeded to DynamoDB + S3**
+- [x] **fabric.js canvas editor — WORKING (load template, edit, add text, undo/redo, export PNG)**
+- [x] **Quick Mode rendering (auto-fill + export from TemplatePreviewScreen)**
+- [x] **Download to device (RNFS writeFile from canvas export)**
 - [x] Admin panel (Next.js — template list, upload, API route)
-- [x] AWS infra scripts (setup.sh, teardown.sh, seed-templates.sh)
-- [x] 8 seed templates (good_morning, good_night, diwali, devotional, shayari, motivational, birthday, business_sale)
-- [x] Dependencies installed (app + backend + iOS pods)
-- [x] Google Services Gradle plugin configured
-- [x] Android debug build successful — app runs on physical device
-- [x] Metro bundler connects and loads JS bundle
-- [x] Repos split: poster-frontend + poster-backend (GitHub, private)
-- [x] Vinay-Gurjar added as admin collaborator on both repos
-- [x] Design system foundation (color tokens, typography, spacing, radii, shadows)
-- [x] Animation primitives (5 spring configs, timing presets, press scales)
-- [x] Base components: HapticPressable, Button (gradient), Input (animated border), SkeletonLoader, FadeIn, BottomSheet
-- [x] Deps: react-native-reanimated, gesture-handler, haptic-feedback, linear-gradient, blur
-
-- [x] LoginScreen rebuilt — gradient orb, animated brand, staggered FadeIn, animated Input, haptic Button
-- [x] OtpVerifyScreen rebuilt — spring-scale cells, shake on error, haptic per keystroke, countdown timer, paste support
-- [x] Animated splash screen (pulsing brand icon)
-- [x] GestureHandlerRootView + reanimated babel plugin
-
-- [x] HomeScreen rebuilt — greeting header with parallax, category pill carousel, daily specials carousel, trending grid with skeletons
-- [x] TemplateCard rebuilt — haptic press, skeleton shimmer, fade-in on load, premium badge
-
-- [x] CategoryScreen rebuilt — staggered skeleton grid, FadeIn per card, pull-to-refresh, infinite scroll
-- [x] TemplatePreviewScreen rebuilt — dark immersive backdrop, hero image spring scale, floating action bar, haptics
-
-- [x] EditorScreen rebuilt — floating toolbar in dark card, icon+label tools, grouped with dividers, haptic feedback
-- [x] ProfileScreen rebuilt — animated avatar bounce, initial letter placeholder, Input components, success haptic
-- [x] SubscriptionScreen rebuilt — plan cards with haptic scale, "BEST VALUE" gradient badge, glow shadow, staggered entrance
-- [x] SettingsScreen rebuilt — language chips with glow, icon rows with arrows, section cards, danger sign-out
-- [x] ALL SCREENS REBUILT WITH DESIGN SYSTEM
-
-- [x] Android build successful, app running on physical device
-- [x] All design system screens verified rendering on device
-- [x] Auth flow working — Firebase session persisted, navigation gate correct (auth → profile setup)
-- [x] Profile screen verified — avatar initial, image picker, input fields, gradient button all working
-- [x] Worklet error fixed (switched HapticPressable from GestureDetector to Pressable)
+- [x] App running on Android physical device
+- [x] Dev auth bypass for local testing without Firebase Admin creds
 
 ### Next Up
-- [ ] Run backend (Express API) so profile save works
-- [ ] Run AWS infra setup (DynamoDB, S3, CloudFront)
-- [ ] Complete auth flow test (Login → OTP → Profile → Home)
-- [ ] Run AWS infra setup (DynamoDB, S3, CloudFront)
-- [ ] Connect app to backend
-- [ ] Template browsing + Quick Mode rendering
-- [ ] Download + share functionality
-- [ ] Canvas editor (fabric.js WebView)
+- [ ] Get Firebase Admin service account JSON for production auth verification
+- [ ] Upload actual template background images/thumbnails to S3
+- [ ] Test full end-to-end flow on device (browse → preview → download → edit)
 - [ ] Razorpay payment integration
 - [ ] Push notifications (FCM)
 - [ ] Production build + store submission
 
-## Build Order
-1. ~~RN scaffold + auth + navigation + stores~~ DONE
-2. ~~Backend API + DynamoDB + S3/CDN~~ DONE
-3. ~~Template system (JSON schema + auto-fill engine)~~ DONE
-4. Home/browse UI + Quick Mode renderer
-5. Download + share + paywall
-6. Canvas editor (fabric.js WebView)
-7. Admin panel + push notifications
+## Running Locally
+```bash
+# Backend
+cd poster-backend
+npm install
+npm run dev                    # Starts Express on port 3000
+
+# Frontend (separate terminal)
+cd poster-frontend
+npm start                      # Metro bundler
+npx react-native run-android   # Or: adb reverse tcp:3000 tcp:3000 first
+```
 
 ## Conventions
 - TypeScript strict mode everywhere

@@ -5,6 +5,7 @@ set -euo pipefail
 # Poster App — AWS Infrastructure Setup
 # Region: ap-south-1
 # Idempotent: checks if each resource exists before creating
+# Compatible with bash 3.2 (macOS default)
 # ──────────────────────────────────────────────────────────────
 
 REGION="ap-south-1"
@@ -33,20 +34,26 @@ warn()  { echo -e "${YELLOW}[SKIP]${NC}  $*"; }
 err()   { echo -e "${RED}[ERR]${NC}   $*"; }
 header(){ echo -e "\n${BOLD}━━━ $* ━━━${NC}"; }
 
-# Initialize outputs
-declare -A OUTPUTS
+# Output vars (bash 3.2 compatible — no associative arrays)
+OUT_COGNITO_USER_POOL_ID=""
+OUT_COGNITO_CLIENT_ID=""
+OUT_DYNAMODB_TABLE=""
+OUT_S3_BUCKET=""
+OUT_CF_DIST_ID=""
+OUT_CF_DOMAIN=""
+OUT_CF_OAC_ID=""
 
 save_outputs() {
   cat > "$OUTPUTS_FILE" <<OJSON
 {
   "region": "${REGION}",
-  "cognito_user_pool_id": "${OUTPUTS[cognito_user_pool_id]:-}",
-  "cognito_client_id": "${OUTPUTS[cognito_client_id]:-}",
-  "dynamodb_table": "${OUTPUTS[dynamodb_table]:-}",
-  "s3_bucket": "${OUTPUTS[s3_bucket]:-}",
-  "cloudfront_distribution_id": "${OUTPUTS[cloudfront_distribution_id]:-}",
-  "cloudfront_domain": "${OUTPUTS[cloudfront_domain]:-}",
-  "cloudfront_oac_id": "${OUTPUTS[cloudfront_oac_id]:-}"
+  "cognito_user_pool_id": "${OUT_COGNITO_USER_POOL_ID}",
+  "cognito_client_id": "${OUT_COGNITO_CLIENT_ID}",
+  "dynamodb_table": "${OUT_DYNAMODB_TABLE}",
+  "s3_bucket": "${OUT_S3_BUCKET}",
+  "cloudfront_distribution_id": "${OUT_CF_DIST_ID}",
+  "cloudfront_domain": "${OUT_CF_DOMAIN}",
+  "cloudfront_oac_id": "${OUT_CF_OAC_ID}"
 }
 OJSON
 }
@@ -91,7 +98,7 @@ else
     --query 'UserPool.Id' --output text)
   ok "Created User Pool: ${USER_POOL_ID}"
 fi
-OUTPUTS[cognito_user_pool_id]="$USER_POOL_ID"
+OUT_COGNITO_USER_POOL_ID="$USER_POOL_ID"
 
 # ── App Client ──
 header "Cognito App Client"
@@ -115,33 +122,7 @@ else
     --query 'UserPoolClient.ClientId' --output text)
   ok "Created App Client: ${CLIENT_ID}"
 fi
-OUTPUTS[cognito_client_id]="$CLIENT_ID"
-
-# ── Google Identity Provider (placeholder) ──
-header "Cognito Google IdP (placeholder)"
-
-EXISTING_IDP=$(aws cognito-idp describe-identity-provider \
-  --user-pool-id "$USER_POOL_ID" --provider-name Google \
-  --region "$REGION" --query 'IdentityProvider.ProviderName' --output text 2>/dev/null || echo "None")
-
-if [[ "$EXISTING_IDP" != "None" && -n "$EXISTING_IDP" ]]; then
-  warn "Google IdP already configured"
-else
-  info "Creating Google IdP placeholder (update client_id and client_secret later)..."
-  aws cognito-idp create-identity-provider \
-    --user-pool-id "$USER_POOL_ID" \
-    --provider-name Google \
-    --provider-type Google \
-    --region "$REGION" \
-    --provider-details '{
-      "client_id": "REPLACE_WITH_GOOGLE_CLIENT_ID",
-      "client_secret": "REPLACE_WITH_GOOGLE_CLIENT_SECRET",
-      "authorize_scopes": "openid email profile"
-    }' \
-    --attribute-mapping '{"email":"email","name":"name","username":"sub"}' \
-    > /dev/null
-  ok "Created Google IdP placeholder — update credentials in AWS Console"
-fi
+OUT_COGNITO_CLIENT_ID="$CLIENT_ID"
 
 # ──────────────────────────────────────────────────────────────
 # 2. DynamoDB Table
@@ -201,7 +182,7 @@ else
 
   ok "Created DynamoDB table with GSIs and PITR enabled"
 fi
-OUTPUTS[dynamodb_table]="$DYNAMO_TABLE"
+OUT_DYNAMODB_TABLE="$DYNAMO_TABLE"
 
 # ──────────────────────────────────────────────────────────────
 # 3. S3 Bucket
@@ -240,7 +221,7 @@ else
     --cors-configuration '{
       "CORSRules": [{
         "AllowedHeaders": ["*"],
-        "AllowedMethods": ["GET"],
+        "AllowedMethods": ["GET", "PUT"],
         "AllowedOrigins": ["*"],
         "MaxAgeSeconds": 3600
       }]
@@ -249,14 +230,14 @@ else
 
   ok "S3 bucket configured (public access blocked, versioning on, CORS set)"
 fi
-OUTPUTS[s3_bucket]="$S3_BUCKET"
+OUT_S3_BUCKET="$S3_BUCKET"
 
 # ──────────────────────────────────────────────────────────────
 # 4. CloudFront Distribution with OAC
 # ──────────────────────────────────────────────────────────────
 header "CloudFront Origin Access Control"
 
-EXISTING_OAC_ID=$(aws cloudfront list-origin-access-controls --region "$REGION" \
+EXISTING_OAC_ID=$(aws cloudfront list-origin-access-controls \
   --query "OriginAccessControlList.Items[?Name=='${CF_OAC_NAME}'].Id | [0]" --output text 2>/dev/null || echo "None")
 
 if [[ "$EXISTING_OAC_ID" != "None" && -n "$EXISTING_OAC_ID" ]]; then
@@ -275,7 +256,7 @@ else
     --query 'OriginAccessControl.Id' --output text)
   ok "Created OAC: ${OAC_ID}"
 fi
-OUTPUTS[cloudfront_oac_id]="$OAC_ID"
+OUT_CF_OAC_ID="$OAC_ID"
 
 header "CloudFront Distribution"
 
@@ -293,53 +274,50 @@ else
   info "Creating CloudFront distribution..."
   CALLER_REF="poster-app-$(date +%s)"
 
-  DIST_CONFIG=$(cat <<DISTJSON
-{
-  "CallerReference": "${CALLER_REF}",
-  "Comment": "${CF_COMMENT}",
-  "Enabled": true,
-  "PriceClass": "PriceClass_200",
-  "HttpVersion": "http2and3",
-  "DefaultRootObject": "",
-  "Origins": {
-    "Quantity": 1,
-    "Items": [
+  DIST_CONFIG="{
+  \"CallerReference\": \"${CALLER_REF}\",
+  \"Comment\": \"${CF_COMMENT}\",
+  \"Enabled\": true,
+  \"PriceClass\": \"PriceClass_200\",
+  \"HttpVersion\": \"http2and3\",
+  \"DefaultRootObject\": \"\",
+  \"Origins\": {
+    \"Quantity\": 1,
+    \"Items\": [
       {
-        "Id": "S3-${S3_BUCKET}",
-        "DomainName": "${S3_ORIGIN_DOMAIN}",
-        "OriginAccessControlId": "${OAC_ID}",
-        "S3OriginConfig": {
-          "OriginAccessIdentity": ""
+        \"Id\": \"S3-${S3_BUCKET}\",
+        \"DomainName\": \"${S3_ORIGIN_DOMAIN}\",
+        \"OriginAccessControlId\": \"${OAC_ID}\",
+        \"S3OriginConfig\": {
+          \"OriginAccessIdentity\": \"\"
         }
       }
     ]
   },
-  "DefaultCacheBehavior": {
-    "TargetOriginId": "S3-${S3_BUCKET}",
-    "ViewerProtocolPolicy": "redirect-to-https",
-    "AllowedMethods": {
-      "Quantity": 2,
-      "Items": ["GET", "HEAD"],
-      "CachedMethods": {
-        "Quantity": 2,
-        "Items": ["GET", "HEAD"]
+  \"DefaultCacheBehavior\": {
+    \"TargetOriginId\": \"S3-${S3_BUCKET}\",
+    \"ViewerProtocolPolicy\": \"redirect-to-https\",
+    \"AllowedMethods\": {
+      \"Quantity\": 2,
+      \"Items\": [\"GET\", \"HEAD\"],
+      \"CachedMethods\": {
+        \"Quantity\": 2,
+        \"Items\": [\"GET\", \"HEAD\"]
       }
     },
-    "CachePolicyId": "658327ea-f89d-4fab-a63d-7e88639e58f6",
-    "Compress": true
+    \"CachePolicyId\": \"658327ea-f89d-4fab-a63d-7e88639e58f6\",
+    \"Compress\": true
   },
-  "ViewerCertificate": {
-    "CloudFrontDefaultCertificate": true
+  \"ViewerCertificate\": {
+    \"CloudFrontDefaultCertificate\": true
   },
-  "Restrictions": {
-    "GeoRestriction": {
-      "RestrictionType": "none",
-      "Quantity": 0
+  \"Restrictions\": {
+    \"GeoRestriction\": {
+      \"RestrictionType\": \"none\",
+      \"Quantity\": 0
     }
   }
-}
-DISTJSON
-)
+}"
 
   DIST_OUTPUT=$(aws cloudfront create-distribution \
     --distribution-config "$DIST_CONFIG" \
@@ -351,8 +329,8 @@ DISTJSON
   ok "Created CloudFront distribution: ${CF_DIST_ID}"
   ok "Domain: ${CF_DOMAIN}"
 fi
-OUTPUTS[cloudfront_distribution_id]="$CF_DIST_ID"
-OUTPUTS[cloudfront_domain]="$CF_DOMAIN"
+OUT_CF_DIST_ID="$CF_DIST_ID"
+OUT_CF_DOMAIN="$CF_DOMAIN"
 
 # ──────────────────────────────────────────────────────────────
 # 5. S3 Bucket Policy for CloudFront OAC
@@ -361,28 +339,25 @@ header "S3 Bucket Policy (CloudFront OAC)"
 
 AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query 'Account' --output text)
 
-BUCKET_POLICY=$(cat <<BPJSON
-{
-  "Version": "2012-10-17",
-  "Statement": [
+BUCKET_POLICY="{
+  \"Version\": \"2012-10-17\",
+  \"Statement\": [
     {
-      "Sid": "AllowCloudFrontServicePrincipalReadOnly",
-      "Effect": "Allow",
-      "Principal": {
-        "Service": "cloudfront.amazonaws.com"
+      \"Sid\": \"AllowCloudFrontServicePrincipalReadOnly\",
+      \"Effect\": \"Allow\",
+      \"Principal\": {
+        \"Service\": \"cloudfront.amazonaws.com\"
       },
-      "Action": "s3:GetObject",
-      "Resource": "arn:aws:s3:::${S3_BUCKET}/*",
-      "Condition": {
-        "StringEquals": {
-          "AWS:SourceArn": "arn:aws:cloudfront::${AWS_ACCOUNT_ID}:distribution/${CF_DIST_ID}"
+      \"Action\": \"s3:GetObject\",
+      \"Resource\": \"arn:aws:s3:::${S3_BUCKET}/*\",
+      \"Condition\": {
+        \"StringEquals\": {
+          \"AWS:SourceArn\": \"arn:aws:cloudfront::${AWS_ACCOUNT_ID}:distribution/${OUT_CF_DIST_ID}\"
         }
       }
     }
   ]
-}
-BPJSON
-)
+}"
 
 aws s3api put-bucket-policy --bucket "$S3_BUCKET" --policy "$BUCKET_POLICY" > /dev/null
 ok "Bucket policy applied for CloudFront OAC"
@@ -403,19 +378,19 @@ echo -e "${BOLD}╠════════════════════�
 echo -e "${BOLD}║${NC} Region:              ${GREEN}${REGION}${NC}"
 echo -e "${BOLD}║${NC}"
 echo -e "${BOLD}║${NC} ${CYAN}Cognito${NC}"
-echo -e "${BOLD}║${NC}   User Pool ID:     ${GREEN}${OUTPUTS[cognito_user_pool_id]}${NC}"
-echo -e "${BOLD}║${NC}   Client ID:        ${GREEN}${OUTPUTS[cognito_client_id]}${NC}"
+echo -e "${BOLD}║${NC}   User Pool ID:     ${GREEN}${OUT_COGNITO_USER_POOL_ID}${NC}"
+echo -e "${BOLD}║${NC}   Client ID:        ${GREEN}${OUT_COGNITO_CLIENT_ID}${NC}"
 echo -e "${BOLD}║${NC}"
 echo -e "${BOLD}║${NC} ${CYAN}DynamoDB${NC}"
-echo -e "${BOLD}║${NC}   Table:            ${GREEN}${OUTPUTS[dynamodb_table]}${NC}"
+echo -e "${BOLD}║${NC}   Table:            ${GREEN}${OUT_DYNAMODB_TABLE}${NC}"
 echo -e "${BOLD}║${NC}"
 echo -e "${BOLD}║${NC} ${CYAN}S3${NC}"
-echo -e "${BOLD}║${NC}   Bucket:           ${GREEN}${OUTPUTS[s3_bucket]}${NC}"
+echo -e "${BOLD}║${NC}   Bucket:           ${GREEN}${OUT_S3_BUCKET}${NC}"
 echo -e "${BOLD}║${NC}"
 echo -e "${BOLD}║${NC} ${CYAN}CloudFront${NC}"
-echo -e "${BOLD}║${NC}   Distribution ID:  ${GREEN}${OUTPUTS[cloudfront_distribution_id]}${NC}"
-echo -e "${BOLD}║${NC}   Domain:           ${GREEN}${OUTPUTS[cloudfront_domain]}${NC}"
-echo -e "${BOLD}║${NC}   OAC ID:           ${GREEN}${OUTPUTS[cloudfront_oac_id]}${NC}"
+echo -e "${BOLD}║${NC}   Distribution ID:  ${GREEN}${OUT_CF_DIST_ID}${NC}"
+echo -e "${BOLD}║${NC}   Domain:           ${GREEN}${OUT_CF_DOMAIN}${NC}"
+echo -e "${BOLD}║${NC}   OAC ID:           ${GREEN}${OUT_CF_OAC_ID}${NC}"
 echo -e "${BOLD}╠══════════════════════════════════════════════════════════╣${NC}"
 echo -e "${BOLD}║${NC} ${YELLOW}TODO: Update Google IdP credentials in Cognito Console${NC}"
 echo -e "${BOLD}╚══════════════════════════════════════════════════════════╝${NC}"
@@ -423,9 +398,9 @@ echo ""
 echo -e "Add these to your ${BOLD}.env${NC} files:"
 echo ""
 echo "  AWS_REGION=${REGION}"
-echo "  COGNITO_USER_POOL_ID=${OUTPUTS[cognito_user_pool_id]}"
-echo "  COGNITO_CLIENT_ID=${OUTPUTS[cognito_client_id]}"
-echo "  DYNAMODB_TABLE=${OUTPUTS[dynamodb_table]}"
-echo "  S3_BUCKET=${OUTPUTS[s3_bucket]}"
-echo "  CDN_BASE_URL=https://${OUTPUTS[cloudfront_domain]}"
+echo "  COGNITO_USER_POOL_ID=${OUT_COGNITO_USER_POOL_ID}"
+echo "  COGNITO_CLIENT_ID=${OUT_COGNITO_CLIENT_ID}"
+echo "  DYNAMODB_TABLE=${OUT_DYNAMODB_TABLE}"
+echo "  S3_BUCKET=${OUT_S3_BUCKET}"
+echo "  CDN_BASE_URL=https://${OUT_CF_DOMAIN}"
 echo ""
