@@ -7,14 +7,13 @@ A hybrid of Crafto (120M+ downloads, auto-personalize status maker) and Poster M
 
 ## Tech Stack
 - **App:** React Native (TypeScript) + Zustand + React Navigation
-- **Canvas:** fabric.js in WebView (MVP), react-native-skia migration later
-- **Auth:** Firebase (Phone OTP + Google sign-in)
+- **Canvas:** fabric.js in WebView
+- **Auth:** Firebase (Phone OTP + Google sign-in) — Firebase Admin SDK for backend token verification
 - **API:** Node.js/Express (TypeScript) — `src/`
 - **DB:** DynamoDB (single-table design)
 - **Storage:** S3 + CloudFront CDN
-- **Image/Video Processing:** Lambda + Sharp + FFmpeg (planned)
-- **Payments:** Razorpay + Google Play Billing (planned)
-- **Push:** FCM via SNS (planned)
+- **Payments:** Razorpay (create order → checkout → verify signature → activate subscription)
+- **Push:** Firebase Cloud Messaging (FCM)
 - **Admin:** Next.js web app — `admin/`
 
 ## Key Architecture
@@ -35,20 +34,21 @@ Local:
 
 ### poster-frontend (React Native app)
 ```
-App.tsx                   # Entry — Firebase auth listener, navigation
+App.tsx                   # Entry — Firebase auth, FCM notifications, navigation
+index.js                  # RN entry + FCM background handler
 src/
   navigation/             # RootNavigator (auth gate + tabs), types
   screens/
     auth/                 # LoginScreen, OtpVerifyScreen
     home/                 # HomeScreen, CategoryScreen, TemplatePreviewScreen
     editor/               # EditorScreen (fabric.js WebView — WORKING)
-    profile/              # ProfileScreen, SubscriptionScreen
+    profile/              # ProfileScreen, SubscriptionScreen (Razorpay checkout)
     settings/             # SettingsScreen
-  canvas/                 # editorHtml.ts — fabric.js HTML engine
+  canvas/                 # editorHtml.ts — fabric.js HTML engine with RN bridge
   theme/                  # Design system: colors, typography, spacing, animations
-  components/             # Base: Button, Input, HapticPressable, SkeletonLoader, FadeIn, BottomSheet + app components
+  components/             # Button, Input, HapticPressable, SkeletonLoader, FadeIn, BottomSheet, etc.
   store/                  # Zustand: auth, user, template, editor, subscription
-  services/               # api (Axios+JWT), auth, templates, user, subscription, storage
+  services/               # api, auth, templates, user, subscription (Razorpay), storage, notifications (FCM)
   utils/                  # constants, helpers, templateEngine (auto-fill)
   types/                  # template, user, api
 android/                  # Native Android (google-services.json included)
@@ -59,61 +59,69 @@ ios/                      # Native iOS (GoogleService-Info.plist included)
 ```
 src/
   index.ts                # Express entry point (port 3000)
-  config/                 # env (zod), dynamodb, s3, firebase admin
-  middleware/              # auth (Firebase JWT + dev bypass), errorHandler, rateLimiter
-  routes/                 # user, templates, upload, subscription
-  services/               # userService, templateService, s3Service
+  config/                 # env (zod), dynamodb, s3, firebase admin, razorpay
+  middleware/              # auth (Firebase JWT verify + dev bypass), errorHandler, rateLimiter
+  routes/                 # user (profile + FCM token), templates, upload, subscription (Razorpay)
+  services/               # userService, templateService, s3Service, subscriptionService
   types/                  # shared types
   utils/                  # response helpers
 admin/                    # Next.js admin panel (template upload + management)
 infra/                    # setup.sh, teardown.sh, seed-templates.sh
 templates/                # 8 seed template JSONs
+scripts/                  # generate-assets.mjs (placeholder image generator)
+firebase-service-account.json  # Firebase Admin SDK creds (gitignored)
 ```
 
-## AWS Infrastructure (PROVISIONED)
+## AWS Infrastructure (PROVISIONED & LIVE)
 - **DynamoDB:** `poster-app` table (PK/SK) with GSIs: `category-language-index`, `scheduled-date-index`. PITR enabled.
 - **S3:** `poster-app-assets-techveda` (versioning, public access blocked, CORS for GET+PUT)
+  - 8 background images, 8 thumbnails, 4 stickers uploaded
 - **CloudFront:** `dklcr2on9ks6p.cloudfront.net` with OAC (no public S3 URLs)
 - **Region:** ap-south-1
 
 ## API Endpoints
 ```
-GET    /health                          # Health check
-GET    /api/v1/templates                # List templates (query: category, language, limit, nextKey)
-GET    /api/v1/templates/daily          # Daily scheduled templates (query: language)
-GET    /api/v1/templates/search         # Search templates (query: q, limit)
-GET    /api/v1/templates/:id            # Get single template
-GET    /api/v1/user/profile             # Get user profile [auth]
-PUT    /api/v1/user/profile             # Update user profile [auth]
-POST   /api/v1/upload/presigned-url     # Get S3 presigned upload URL [auth]
-GET    /api/v1/subscription/status      # Get subscription status [auth]
+GET    /health                              # Health check
+GET    /api/v1/templates                    # List templates (query: category, language, limit, nextKey)
+GET    /api/v1/templates/daily              # Daily scheduled templates (query: language)
+GET    /api/v1/templates/search             # Search templates (query: q, limit)
+GET    /api/v1/templates/:id                # Get single template
+GET    /api/v1/user/profile                 # Get user profile [auth]
+PUT    /api/v1/user/profile                 # Update user profile [auth]
+POST   /api/v1/user/fcm-token              # Register FCM push token [auth]
+POST   /api/v1/upload/presigned-url         # Get S3 presigned upload URL [auth]
+GET    /api/v1/subscription/status          # Get subscription status [auth]
+POST   /api/v1/subscription/create-order    # Create Razorpay order [auth]
+POST   /api/v1/subscription/verify          # Verify payment + activate subscription [auth]
 ```
 
 ## Current Status
 
 ### Done
 - [x] RN scaffold + navigation (auth stack, main tabs, home stack, profile stack)
-- [x] Firebase Auth setup (Phone OTP + Google sign-in)
-- [x] All screens rebuilt with premium design system (animations, haptics, skeletons)
-- [x] Zustand stores (auth, user, template, editor, subscription)
+- [x] Firebase Auth setup (Phone OTP + Google sign-in) — both providers enabled
+- [x] All screens rebuilt with premium design system (reanimated springs, haptics, skeletons, glassmorphism)
+- [x] Zustand stores (auth, user, template, editor, subscription) with AsyncStorage persistence
 - [x] Services layer (api with JWT interceptor, auth, templates, user, storage, subscription)
 - [x] Template engine (auto-fill placeholders with user profile)
-- [x] **Express backend API — FULLY BUILT AND TESTED**
-- [x] **AWS infrastructure provisioned (DynamoDB, S3, CloudFront)**
-- [x] **8 templates seeded to DynamoDB + S3**
-- [x] **fabric.js canvas editor — WORKING (load template, edit, add text, undo/redo, export PNG)**
-- [x] **Quick Mode rendering (auto-fill + export from TemplatePreviewScreen)**
-- [x] **Download to device (RNFS writeFile from canvas export)**
-- [x] Admin panel (Next.js — template list, upload, API route)
+- [x] Express backend API — all routes built and tested
+- [x] Firebase Admin SDK configured with service account — production auth verification working
+- [x] AWS infrastructure provisioned (DynamoDB, S3, CloudFront)
+- [x] 8 templates seeded to DynamoDB + S3 with placeholder assets (backgrounds, thumbnails, stickers)
+- [x] fabric.js canvas editor — load template, edit text, add text, delete, undo/redo, export PNG
+- [x] Quick Mode rendering (auto-fill + export from TemplatePreviewScreen via hidden WebView)
+- [x] Download to device (RNFS writeFile from canvas export)
+- [x] Razorpay payment integration — create order, checkout, verify signature, activate subscription
+- [x] FCM push notifications — permission request, token registration, foreground/background handlers
+- [x] Admin panel (Next.js — template list, upload with category/language/tags)
 - [x] App running on Android physical device
-- [x] Dev auth bypass for local testing without Firebase Admin creds
 
 ### Next Up
-- [ ] Get Firebase Admin service account JSON for production auth verification
-- [ ] Upload actual template background images/thumbnails to S3
-- [ ] Test full end-to-end flow on device (browse → preview → download → edit)
-- [ ] Razorpay payment integration
-- [ ] Push notifications (FCM)
+- [ ] Add Razorpay test keys to .env and test payment flow on device
+- [ ] Test full end-to-end flow on device (auth → browse → preview → download → edit → share)
+- [ ] Replace placeholder gradient backgrounds with actual designed template images
+- [ ] iOS pod install + test on iOS
+- [ ] Video export (FFmpeg Lambda or on-device)
 - [ ] Production build + store submission
 
 ## Running Locally
@@ -126,7 +134,10 @@ npm run dev                    # Starts Express on port 3000
 # Frontend (separate terminal)
 cd poster-frontend
 npm start                      # Metro bundler
-npx react-native run-android   # Or: adb reverse tcp:3000 tcp:3000 first
+
+# Android device
+adb reverse tcp:3000 tcp:3000
+npx react-native run-android
 ```
 
 ## Conventions
@@ -138,3 +149,4 @@ npx react-native run-android   # Or: adb reverse tcp:3000 tcp:3000 first
 - All assets via CloudFront (never S3 direct)
 - Images compressed to WebP before upload
 - Environment variables in .env, never hardcoded
+- Razorpay: create order on backend, checkout on frontend, verify on backend (never trust client)
