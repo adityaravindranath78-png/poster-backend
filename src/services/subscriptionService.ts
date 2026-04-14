@@ -1,14 +1,14 @@
 import crypto from "crypto";
 import { UpdateCommand } from "@aws-sdk/lib-dynamodb";
 import { dynamodb, TABLE_NAME } from "../config/dynamodb.js";
-import { razorpay, PLANS } from "../config/razorpay.js";
+import { getRazorpay, PLANS } from "../config/razorpay.js";
 import { env } from "../config/env.js";
 
 export async function createOrder(planId: string, userId: string) {
   const plan = PLANS[planId];
   if (!plan) throw new Error(`Invalid plan: ${planId}`);
 
-  const order = await razorpay.orders.create({
+  const order = await getRazorpay().orders.create({
     amount: plan.amount,
     currency: plan.currency,
     receipt: `${userId}_${planId}_${Date.now()}`,

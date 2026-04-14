@@ -1,10 +1,22 @@
 import Razorpay from "razorpay";
 import { env } from "./env.js";
 
-export const razorpay = new Razorpay({
-  key_id: env.RAZORPAY_KEY_ID,
-  key_secret: env.RAZORPAY_KEY_SECRET,
-});
+let _instance: Razorpay | null = null;
+
+export function getRazorpay(): Razorpay {
+  if (!env.RAZORPAY_KEY_ID || !env.RAZORPAY_KEY_SECRET) {
+    throw new Error(
+      "Razorpay not configured. Set RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET in .env"
+    );
+  }
+  if (!_instance) {
+    _instance = new Razorpay({
+      key_id: env.RAZORPAY_KEY_ID,
+      key_secret: env.RAZORPAY_KEY_SECRET,
+    });
+  }
+  return _instance;
+}
 
 export const PLANS: Record<
   string,
@@ -12,7 +24,7 @@ export const PLANS: Record<
 > = {
   premium_monthly: {
     name: "Premium Monthly",
-    amount: 9900, // ₹99 in paise
+    amount: 9900,
     currency: "INR",
     period: "monthly",
     interval: 1,
@@ -20,7 +32,7 @@ export const PLANS: Record<
   },
   premium_yearly: {
     name: "Premium Yearly",
-    amount: 59900, // ₹599 in paise
+    amount: 59900,
     currency: "INR",
     period: "yearly",
     interval: 1,
@@ -28,7 +40,7 @@ export const PLANS: Record<
   },
   business_yearly: {
     name: "Business Yearly",
-    amount: 199900, // ₹1999 in paise
+    amount: 199900,
     currency: "INR",
     period: "yearly",
     interval: 1,

@@ -2,6 +2,7 @@ node_modules/
 dist/
 .env
 .env.local
+firebase-service-account.json
 .DS_Store
 infra/outputs.json
 admin/.next/
