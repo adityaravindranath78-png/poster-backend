@@ -20,6 +20,10 @@ const envSchema = z.object({
   FIREBASE_CLIENT_EMAIL: z.string().optional(),
   FIREBASE_PRIVATE_KEY: z.string().optional(),
   GOOGLE_APPLICATION_CREDENTIALS: z.string().optional(),
+
+  // Razorpay
+  RAZORPAY_KEY_ID: z.string().default(""),
+  RAZORPAY_KEY_SECRET: z.string().default(""),
 });
 
 export const env = envSchema.parse(process.env);
