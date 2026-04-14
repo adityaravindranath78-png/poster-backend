@@ -12,12 +12,14 @@ import subscriptionRoutes from "./routes/subscription.js";
 
 // Startup validation
 if (env.NODE_ENV === "production") {
-  const missing: string[] = [];
-  if (!env.RAZORPAY_KEY_ID || !env.RAZORPAY_KEY_SECRET) missing.push("RAZORPAY_KEY_ID/SECRET");
-  if (!env.CLOUDFRONT_DOMAIN) missing.push("CLOUDFRONT_DOMAIN");
-  if (missing.length) {
-    console.error(`[FATAL] Missing required config: ${missing.join(", ")}`);
+  // Hard requirement — server can't function without CDN
+  if (!env.CLOUDFRONT_DOMAIN) {
+    console.error("[FATAL] Missing required config: CLOUDFRONT_DOMAIN");
     process.exit(1);
+  }
+  // Soft requirement — server runs but payment endpoints will fail
+  if (!env.RAZORPAY_KEY_ID || !env.RAZORPAY_KEY_SECRET) {
+    console.warn("[WARN] RAZORPAY_KEY_ID/SECRET not set — payment endpoints will fail");
   }
 }
 
