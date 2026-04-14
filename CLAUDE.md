@@ -129,8 +129,12 @@ POST   /api/v1/subscription/verify          # Verify payment + activate subscrip
 - [x] Backend deployed to EC2 (3.110.134.217:3000) with pm2 + auto-restart
 - [x] IAM role attached for DynamoDB/S3 access (no hardcoded credentials on server)
 - [x] Release APK built and ready for tester (Poster-v1.0-release.apk on Desktop)
+- [x] Full backend security audit — 29 fixes: auth bypass removed, timing-safe Razorpay verification, Zod input validation, atomic payment transactions, DynamoDB scan safety caps, path traversal prevention, graceful shutdown, request correlation IDs, seed script data fixes
 
 ### Next Up
+- [ ] Re-seed templates (seed script updated — old data missing tags_str/subcategory)
+- [ ] Add RAZORPAY_KEY_ID/SECRET + ADMIN_ORIGIN to production .env on EC2
+- [ ] Push audit commit (needs adityaravindranath78-png credential, not AlnicoTech2)
 - [ ] Add Razorpay test keys to .env and test payment flow on device
 - [ ] Test full end-to-end flow on device (auth → browse → preview → download → edit → share)
 - [ ] Replace placeholder gradient backgrounds with actual designed template images
