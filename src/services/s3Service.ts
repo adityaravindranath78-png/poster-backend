@@ -6,6 +6,10 @@ export async function getPresignedUploadUrl(
   key: string,
   contentType: string
 ): Promise<{ uploadUrl: string; fileUrl: string }> {
+  if (!CLOUDFRONT_DOMAIN) {
+    throw new Error("CLOUDFRONT_DOMAIN is required — direct S3 URLs are blocked");
+  }
+
   const command = new PutObjectCommand({
     Bucket: BUCKET_NAME,
     Key: key,
@@ -13,10 +17,7 @@ export async function getPresignedUploadUrl(
   });
 
   const uploadUrl = await getSignedUrl(s3, command, { expiresIn: 300 });
-
-  const fileUrl = CLOUDFRONT_DOMAIN
-    ? `https://${CLOUDFRONT_DOMAIN}/${key}`
-    : `https://${BUCKET_NAME}.s3.amazonaws.com/${key}`;
+  const fileUrl = `https://${CLOUDFRONT_DOMAIN}/${key}`;
 
   return { uploadUrl, fileUrl };
 }

@@ -10,12 +10,14 @@ export async function GET() {
         TableName: TABLE_NAME,
         FilterExpression: "SK = :sk",
         ExpressionAttributeValues: { ":sk": "META" },
+        Limit: 500,
       })
     );
     return NextResponse.json({ success: true, data: result.Items || [] });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json(
-      { success: false, error: error.message },
+      { success: false, error: message },
       { status: 500 }
     );
   }
@@ -30,16 +32,34 @@ export async function POST(request: NextRequest) {
     const subcategory = formData.get("subcategory") as string;
     const language = formData.get("language") as string;
     const premium = formData.get("premium") === "true";
-    const tags = (formData.get("tags") as string)
-      .split(",")
-      .map((t) => t.trim())
-      .filter(Boolean);
+    const tagsRaw = formData.get("tags") as string;
+    const tags = tagsRaw
+      ? tagsRaw
+          .split(",")
+          .map((t) => t.trim().toLowerCase())
+          .filter(Boolean)
+      : [];
     const scheduledDate = formData.get("scheduled_date") as string | null;
+
+    if (!schemaFile || !thumbnailFile || !category || !language) {
+      return NextResponse.json(
+        { success: false, error: "schema, thumbnail, category, and language are required" },
+        { status: 400 }
+      );
+    }
 
     // Parse template JSON to get ID
     const schemaText = await schemaFile.text();
-    const schema = JSON.parse(schemaText);
-    const templateId = schema.id || `${category}_${Date.now()}`;
+    let schema: Record<string, unknown>;
+    try {
+      schema = JSON.parse(schemaText);
+    } catch {
+      return NextResponse.json(
+        { success: false, error: "Invalid JSON in schema file" },
+        { status: 400 }
+      );
+    }
+    const templateId = (schema.id as string) || `${category}_${Date.now()}`;
 
     // Upload schema JSON to S3
     const schemaKey = `templates/${templateId}/schema.json`;
@@ -65,15 +85,23 @@ export async function POST(request: NextRequest) {
       })
     );
 
+    if (!CLOUDFRONT_DOMAIN) {
+      return NextResponse.json(
+        { success: false, error: "CLOUDFRONT_DOMAIN not configured" },
+        { status: 500 }
+      );
+    }
+
     // Insert metadata into DynamoDB
-    const item: Record<string, any> = {
+    const item: Record<string, unknown> = {
       PK: `TEMPLATE#${templateId}`,
       SK: "META",
       category,
-      subcategory,
+      subcategory: subcategory || category,
       language,
       premium,
       tags,
+      tags_str: tags.join(","),
       schema_url: `https://${CLOUDFRONT_DOMAIN}/${schemaKey}`,
       thumbnail_url: `https://${CLOUDFRONT_DOMAIN}/${thumbnailKey}`,
       created_at: Date.now(),
@@ -91,9 +119,10 @@ export async function POST(request: NextRequest) {
     );
 
     return NextResponse.json({ success: true, data: { id: templateId } });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json(
-      { success: false, error: error.message },
+      { success: false, error: message },
       { status: 500 }
     );
   }

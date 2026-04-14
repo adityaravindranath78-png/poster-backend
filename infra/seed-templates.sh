@@ -104,6 +104,11 @@ with open(template_file) as f:
 
 now_ms = int(time.time() * 1000)
 
+# Resolve tags — template JSONs use "tags" as a list
+tags = tmpl.get("tags", ["general"])
+if not tags:
+    tags = ["general"]
+
 # Build DynamoDB item
 item = {
     "PK": {"S": f"TEMPLATE#{template_id}"},
@@ -111,13 +116,15 @@ item = {
     "template_id": {"S": template_id},
     "name": {"S": tmpl.get("name", template_id)},
     "category": {"S": tmpl.get("category", "general")},
+    "subcategory": {"S": tmpl.get("subcategory", tmpl.get("category", "general"))},
     "language": {"S": tmpl.get("language", "en")},
-    "tags": {"SS": tmpl.get("tags", ["general"])} if tmpl.get("tags") else {"SS": ["general"]},
+    "tags": {"L": [{"S": t} for t in tags]},
+    "tags_str": {"S": ",".join(tags).lower()},
     "template_url": {"S": f"https://{cdn_domain}/{s3_key}"},
     "thumbnail_url": {"S": tmpl.get("thumbnail_url", f"https://{cdn_domain}/templates/{template_id}/thumb.webp")},
     "width": {"N": str(tmpl.get("width", 1080))},
     "height": {"N": str(tmpl.get("height", 1080))},
-    "is_premium": {"BOOL": tmpl.get("is_premium", False)},
+    "premium": {"BOOL": tmpl.get("premium", tmpl.get("is_premium", False))},
     "is_active": {"BOOL": True},
     "created_at": {"N": str(tmpl.get("created_at", now_ms))},
     "updated_at": {"N": str(now_ms)}

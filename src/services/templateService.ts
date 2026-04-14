@@ -6,6 +6,22 @@ import {
 import { dynamodb, TABLE_NAME } from "../config/dynamodb.js";
 import { TemplateMeta } from "../types/index.js";
 
+function parseNextKey(nextKey: string | undefined): Record<string, unknown> | undefined {
+  if (!nextKey) return undefined;
+  try {
+    const parsed = JSON.parse(Buffer.from(nextKey, "base64url").toString());
+    if (typeof parsed !== "object" || parsed === null) return undefined;
+    return parsed as Record<string, unknown>;
+  } catch {
+    return undefined;
+  }
+}
+
+function encodeNextKey(key: Record<string, unknown> | undefined): string | undefined {
+  if (!key) return undefined;
+  return Buffer.from(JSON.stringify(key)).toString("base64url");
+}
+
 export async function getTemplates(params: {
   category?: string;
   language?: string;
@@ -47,15 +63,13 @@ async function queryByCategoryLanguage(
       ExpressionAttributeNames: { "#lang": "language" },
       ExpressionAttributeValues: { ":cat": category, ":lang": language },
       Limit: limit,
-      ExclusiveStartKey: nextKey ? JSON.parse(Buffer.from(nextKey, "base64url").toString()) : undefined,
+      ExclusiveStartKey: parseNextKey(nextKey),
     })
   );
 
   return {
     items: (result.Items || []).map(mapToTemplateMeta),
-    nextKey: result.LastEvaluatedKey
-      ? Buffer.from(JSON.stringify(result.LastEvaluatedKey)).toString("base64url")
-      : undefined,
+    nextKey: encodeNextKey(result.LastEvaluatedKey),
   };
 }
 
@@ -71,15 +85,13 @@ async function queryByCategory(
       KeyConditionExpression: "category = :cat",
       ExpressionAttributeValues: { ":cat": category },
       Limit: limit,
-      ExclusiveStartKey: nextKey ? JSON.parse(Buffer.from(nextKey, "base64url").toString()) : undefined,
+      ExclusiveStartKey: parseNextKey(nextKey),
     })
   );
 
   return {
     items: (result.Items || []).map(mapToTemplateMeta),
-    nextKey: result.LastEvaluatedKey
-      ? Buffer.from(JSON.stringify(result.LastEvaluatedKey)).toString("base64url")
-      : undefined,
+    nextKey: encodeNextKey(result.LastEvaluatedKey),
   };
 }
 
@@ -98,24 +110,46 @@ async function scanTemplates(
     values[":lang"] = language;
   }
 
-  const result = await dynamodb.send(
-    new ScanCommand({
-      TableName: TABLE_NAME,
-      FilterExpression: filterParts.join(" AND "),
-      ExpressionAttributeValues: values,
-      ...(Object.keys(names).length > 0 && {
-        ExpressionAttributeNames: names,
-      }),
-      Limit: limit,
-      ExclusiveStartKey: nextKey ? JSON.parse(Buffer.from(nextKey, "base64url").toString()) : undefined,
-    })
-  );
+  const items: Record<string, unknown>[] = [];
+  let exclusiveStartKey = parseNextKey(nextKey);
+  let tableExhausted = false;
+  let pagesScanned = 0;
+  const MAX_SCAN_PAGES = 10; // Safety cap — prevents runaway scans on large tables
+
+  // Paginate internally until we have enough items or exhaust the table.
+  // DynamoDB Scan Limit caps items *evaluated* (pre-filter), not items *returned*.
+  while (items.length < limit && pagesScanned < MAX_SCAN_PAGES) {
+    const result = await dynamodb.send(
+      new ScanCommand({
+        TableName: TABLE_NAME,
+        FilterExpression: filterParts.join(" AND "),
+        ExpressionAttributeValues: values,
+        ...(Object.keys(names).length > 0 && {
+          ExpressionAttributeNames: names,
+        }),
+        Limit: limit * 3,
+        ExclusiveStartKey: exclusiveStartKey,
+      })
+    );
+
+    items.push(...(result.Items || []));
+    exclusiveStartKey = result.LastEvaluatedKey;
+    pagesScanned++;
+
+    if (!exclusiveStartKey) {
+      tableExhausted = true;
+      break;
+    }
+  }
+
+  // Return exactly `limit` items. Only provide nextKey if there's more to read.
+  // Since Scan doesn't let us resume at an arbitrary item offset, we can only
+  // provide a nextKey when we stopped exactly at a DynamoDB page boundary.
+  const hasMore = !tableExhausted && items.length >= limit;
 
   return {
-    items: (result.Items || []).map(mapToTemplateMeta),
-    nextKey: result.LastEvaluatedKey
-      ? Buffer.from(JSON.stringify(result.LastEvaluatedKey)).toString("base64url")
-      : undefined,
+    items: items.slice(0, limit).map(mapToTemplateMeta),
+    nextKey: hasMore ? encodeNextKey(exclusiveStartKey) : undefined,
   };
 }
 
@@ -138,20 +172,24 @@ export async function getDailyTemplates(
 ): Promise<{ items: TemplateMeta[] }> {
   const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
 
+  const values: Record<string, unknown> = { ":date": today };
+  const names: Record<string, string> = {};
+  let filterExpression: string | undefined;
+
+  if (language) {
+    filterExpression = "#lang = :lang";
+    names["#lang"] = "language";
+    values[":lang"] = language;
+  }
+
   const result = await dynamodb.send(
     new QueryCommand({
       TableName: TABLE_NAME,
       IndexName: "scheduled-date-index",
       KeyConditionExpression: "scheduled_date = :date",
-      ExpressionAttributeValues: { ":date": today },
-      ...(language && {
-        FilterExpression: "#lang = :lang",
-        ExpressionAttributeNames: { "#lang": "language" },
-        ExpressionAttributeValues: {
-          ":date": today,
-          ":lang": language,
-        },
-      }),
+      ExpressionAttributeValues: values,
+      ...(filterExpression && { FilterExpression: filterExpression }),
+      ...(Object.keys(names).length > 0 && { ExpressionAttributeNames: names }),
     })
   );
 
@@ -170,7 +208,7 @@ export async function searchTemplates(
   const filterParts: string[] = ["SK = :sk"];
   const values: Record<string, unknown> = { ":sk": "META" };
 
-  // Match any word against tags (joined as string) or category/subcategory
+  // Match any word against tags_str or category/subcategory
   words.forEach((word, i) => {
     filterParts.push(
       `(contains(#tags_str, :w${i}) OR contains(category, :w${i}) OR contains(subcategory, :w${i}))`
@@ -178,22 +216,46 @@ export async function searchTemplates(
     values[`:w${i}`] = word;
   });
 
-  const result = await dynamodb.send(
-    new ScanCommand({
-      TableName: TABLE_NAME,
-      FilterExpression: filterParts.join(" AND "),
-      ExpressionAttributeNames: { "#tags_str": "tags_str" },
-      ExpressionAttributeValues: values,
-      Limit: Math.min(limit, 50),
-    })
-  );
+  // Paginate scan internally to get enough results
+  const items: Record<string, unknown>[] = [];
+  const maxLimit = Math.min(limit, 50);
+  let exclusiveStartKey: Record<string, unknown> | undefined;
+  let pagesScanned = 0;
+  const MAX_SCAN_PAGES = 10; // Safety cap
 
-  return { items: (result.Items || []).map(mapToTemplateMeta) };
+  while (items.length < maxLimit && pagesScanned < MAX_SCAN_PAGES) {
+    const result = await dynamodb.send(
+      new ScanCommand({
+        TableName: TABLE_NAME,
+        FilterExpression: filterParts.join(" AND "),
+        ExpressionAttributeNames: { "#tags_str": "tags_str" },
+        ExpressionAttributeValues: values,
+        Limit: maxLimit * 3,
+        ExclusiveStartKey: exclusiveStartKey,
+      })
+    );
+
+    items.push(...(result.Items || []));
+    exclusiveStartKey = result.LastEvaluatedKey;
+    pagesScanned++;
+
+    if (!exclusiveStartKey) break;
+  }
+
+  return { items: items.slice(0, maxLimit).map(mapToTemplateMeta) };
 }
 
 function mapToTemplateMeta(item: Record<string, unknown>): TemplateMeta {
   const pk = item.PK as string;
   const id = pk.startsWith("TEMPLATE#") ? pk.slice(9) : (item.template_id as string) || pk;
+
+  // Handle tags from both List (array) and Set (DynamoDB SS → JS Set)
+  let tags: string[] = [];
+  if (Array.isArray(item.tags)) {
+    tags = item.tags as string[];
+  } else if (item.tags instanceof Set) {
+    tags = [...item.tags] as string[];
+  }
 
   return {
     id,
@@ -201,7 +263,7 @@ function mapToTemplateMeta(item: Record<string, unknown>): TemplateMeta {
     subcategory: (item.subcategory as string) || "",
     language: (item.language as string) || "en",
     premium: (item.premium as boolean) ?? (item.is_premium as boolean) ?? false,
-    tags: Array.isArray(item.tags) ? (item.tags as string[]) : [],
+    tags,
     schema_url: (item.schema_url as string) || (item.template_url as string) || "",
     thumbnail_url: (item.thumbnail_url as string) || "",
     created_at: (item.created_at as number) || 0,

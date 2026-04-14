@@ -24,6 +24,9 @@ const envSchema = z.object({
   // Razorpay
   RAZORPAY_KEY_ID: z.string().default(""),
   RAZORPAY_KEY_SECRET: z.string().default(""),
+
+  // Admin panel origin for CORS
+  ADMIN_ORIGIN: z.string().default(""),
 });
 
 export const env = envSchema.parse(process.env);

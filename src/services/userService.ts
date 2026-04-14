@@ -1,4 +1,4 @@
-import { GetCommand, PutCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
+import { GetCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
 import { dynamodb, TABLE_NAME } from "../config/dynamodb.js";
 import { UserProfile } from "../types/index.js";
 
@@ -21,32 +21,8 @@ export async function createOrUpdateProfile(
   userId: string,
   updates: Partial<UserProfile>
 ): Promise<UserProfile> {
-  const existing = await getUserProfile(userId);
-
-  if (!existing) {
-    // Create new profile
-    const item: Record<string, unknown> = {
-      PK: `USER#${userId}`,
-      SK: "PROFILE",
-      name: updates.name || "",
-      phone: updates.phone,
-      photo_url: updates.photoUrl,
-      business_name: updates.businessName,
-      logo_url: updates.logoUrl,
-      language: updates.language || "en",
-      subscription_status: "free",
-      created_at: Date.now(),
-      updated_at: Date.now(),
-    };
-
-    await dynamodb.send(
-      new PutCommand({ TableName: TABLE_NAME, Item: item })
-    );
-
-    return mapItemToProfile(userId, item);
-  }
-
-  // Build update expression dynamically
+  // Atomic upsert — no read-then-write race condition.
+  // UpdateCommand creates the item if it doesn't exist.
   const fieldMap: Record<string, string> = {
     name: "name",
     phone: "phone",
@@ -69,6 +45,30 @@ export async function createOrUpdateProfile(
       names[nameAlias] = dbField;
       values[placeholder] = val;
     }
+  }
+
+  // SET defaults only if the item is new (if_not_exists is a no-op on existing attrs).
+  // Only add defaults for fields that weren't explicitly provided in this update,
+  // otherwise DynamoDB errors with "Two document paths overlap".
+  expParts.push(
+    "#sub_status = if_not_exists(#sub_status, :free)",
+    "#created_at = if_not_exists(#created_at, :now)"
+  );
+  names["#sub_status"] = "subscription_status";
+  names["#created_at"] = "created_at";
+  values[":free"] = "free";
+  values[":now"] = Date.now();
+
+  if (updates.language === undefined) {
+    expParts.push("#lang_default = if_not_exists(#lang_default, :default_lang)");
+    names["#lang_default"] = "language";
+    values[":default_lang"] = "en";
+  }
+
+  if (updates.name === undefined) {
+    expParts.push("#name_default = if_not_exists(#name_default, :empty)");
+    names["#name_default"] = "name";
+    values[":empty"] = "";
   }
 
   const result = await dynamodb.send(

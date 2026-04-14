@@ -1,8 +1,9 @@
+import fs from "fs";
 import admin from "firebase-admin";
 import { env } from "./env.js";
 
 if (!admin.apps.length) {
-  if (env.GOOGLE_APPLICATION_CREDENTIALS) {
+  if (env.GOOGLE_APPLICATION_CREDENTIALS && fs.existsSync(env.GOOGLE_APPLICATION_CREDENTIALS)) {
     // Use service account JSON file path
     admin.initializeApp({
       credential: admin.credential.applicationDefault(),
@@ -17,8 +18,12 @@ if (!admin.apps.length) {
       }),
     });
   } else {
-    // Default credentials (for local dev with gcloud auth)
-    admin.initializeApp();
+    console.error(
+      "[FATAL] Firebase Admin credentials not configured. " +
+      "Set GOOGLE_APPLICATION_CREDENTIALS to a valid file path, " +
+      "or set FIREBASE_PROJECT_ID + FIREBASE_PRIVATE_KEY in .env"
+    );
+    process.exit(1);
   }
 }
 
