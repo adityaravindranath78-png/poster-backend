@@ -73,11 +73,21 @@ firebase-service-account.json  # Firebase Admin SDK creds (gitignored)
 ```
 
 ## AWS Infrastructure (PROVISIONED & LIVE)
+- **EC2:** `3.110.134.217` (t4g.micro, Ubuntu 22.04, ap-south-1)
+  - Node.js 22, pm2, auto-restart on reboot
+  - IAM role: `poster-app-ec2-role` (DynamoDB + S3 full access)
+  - Security group: `poster-app-sg` (ports 22, 80, 443, 3000)
+  - SSH key: `~/.ssh/poster-app-key.pem`
 - **DynamoDB:** `poster-app` table (PK/SK) with GSIs: `category-language-index`, `scheduled-date-index`. PITR enabled.
 - **S3:** `poster-app-assets-techveda` (versioning, public access blocked, CORS for GET+PUT)
   - 8 background images, 8 thumbnails, 4 stickers uploaded
 - **CloudFront:** `dklcr2on9ks6p.cloudfront.net` with OAC (no public S3 URLs)
 - **Region:** ap-south-1
+
+## Production API
+- **Base URL:** `http://3.110.134.217:3000/api/v1`
+- **Process manager:** pm2 (auto-restart, startup on boot)
+- **Deploy:** `ssh -i ~/.ssh/poster-app-key.pem ubuntu@3.110.134.217 'cd poster-backend && git pull && npm install --omit=dev && pm2 restart poster-api'`
 
 ## API Endpoints
 ```
@@ -116,13 +126,17 @@ POST   /api/v1/subscription/verify          # Verify payment + activate subscrip
 - [x] Admin panel (Next.js — template list, upload with category/language/tags)
 - [x] App running on Android physical device
 
+- [x] Backend deployed to EC2 (3.110.134.217:3000) with pm2 + auto-restart
+- [x] IAM role attached for DynamoDB/S3 access (no hardcoded credentials on server)
+- [x] Release APK built and ready for tester (Poster-v1.0-release.apk on Desktop)
+
 ### Next Up
 - [ ] Add Razorpay test keys to .env and test payment flow on device
 - [ ] Test full end-to-end flow on device (auth → browse → preview → download → edit → share)
 - [ ] Replace placeholder gradient backgrounds with actual designed template images
 - [ ] iOS pod install + test on iOS
 - [ ] Video export (FFmpeg Lambda or on-device)
-- [ ] Production build + store submission
+- [ ] Store submission (Google Play + App Store)
 
 ## Running Locally
 ```bash
