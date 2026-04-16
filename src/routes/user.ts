@@ -13,9 +13,9 @@ const profileUpdateSchema = z
   .object({
     name: z.string().max(100).optional(),
     phone: z.string().max(20).optional(),
-    photoUrl: z.string().url().max(2048).optional(),
+    photoUrl: z.union([z.literal(""), z.string().url().max(2048)]).optional(),
     businessName: z.string().max(200).optional(),
-    logoUrl: z.string().url().max(2048).optional(),
+    logoUrl: z.union([z.literal(""), z.string().url().max(2048)]).optional(),
     language: z
       .enum(["en", "hi", "mr", "gu", "ta", "te", "kn", "ml"])
       .optional(),
