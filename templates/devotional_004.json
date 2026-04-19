@@ -1,0 +1,90 @@
+{
+  "id": "devotional_004",
+  "category": "devotional",
+  "subcategory": "devotional_v004",
+  "language": "hi",
+  "tags": [
+    "devotional",
+    "devotional_v004",
+    "hi"
+  ],
+  "premium": false,
+  "thumbnail_url": "https://dklcr2on9ks6p.cloudfront.net/templates/devotional_001/thumb.webp",
+  "canvas": {
+    "width": 1080,
+    "height": 1080
+  },
+  "layers": [
+    {
+      "type": "image",
+      "src": "backgrounds/ganesh_orange.webp",
+      "x": 0,
+      "y": 0,
+      "width": 1080,
+      "height": 1080,
+      "z": 0,
+      "locked": true
+    },
+    {
+      "type": "text",
+      "content": "राधे राधे",
+      "font": "NotoSansDevanagari-Bold",
+      "size": 88,
+      "color": "#FFFFFF",
+      "x": 540,
+      "y": 200,
+      "z": 1,
+      "editable": true
+    },
+    {
+      "type": "text",
+      "content": "जय श्री कृष्ण",
+      "font": "NotoSansDevanagari-Regular",
+      "size": 36,
+      "color": "#F2E9D7",
+      "x": 540,
+      "y": 310,
+      "z": 2,
+      "editable": true
+    },
+    {
+      "type": "placeholder",
+      "key": "user_photo",
+      "shape": "circle",
+      "x": 540,
+      "y": 560,
+      "radius": 120,
+      "z": 3
+    },
+    {
+      "type": "placeholder",
+      "key": "user_name",
+      "font": "Poppins-SemiBold",
+      "size": 40,
+      "color": "#FFFFFF",
+      "x": 540,
+      "y": 740,
+      "z": 4
+    },
+    {
+      "type": "placeholder",
+      "key": "phone",
+      "font": "Poppins-Regular",
+      "size": 24,
+      "color": "#E5D9BE",
+      "x": 540,
+      "y": 800,
+      "z": 5
+    },
+    {
+      "type": "placeholder",
+      "key": "logo",
+      "shape": "rectangle",
+      "x": 540,
+      "y": 920,
+      "width": 140,
+      "height": 60,
+      "z": 6
+    }
+  ]
+}
